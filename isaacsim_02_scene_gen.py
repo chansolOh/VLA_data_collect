@@ -20,6 +20,7 @@ import omni.timeline
 
 import sys
 import pathlib
+# sys.path.append(f"{pathlib.Path.home()}/ochansol/isaac_code/isaac_chansol")
 sys.path.append(f"{pathlib.Path.home()}/ochansol/isaac_chansol")
 import Utils.isaac_utils_51.rep_utils as csr
 import Utils.isaac_utils_51.scan_rep as scan_rep
@@ -224,7 +225,7 @@ for episode_num in episode_list:
 
     if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
         rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
-        if len(rgb_list) > len(action_data)//4:
+        if len(rgb_list) >= len(action_data)//4:
             print(f"Already exists : {episode_num} PNG , skip...")
             continue
 
