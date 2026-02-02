@@ -1,0 +1,28 @@
+------------------  omy l100 start -------------------
+
+~/ochansol/robotis/open_manipulator/docker/container.sh enter
+
+
+ros2 launch open_manipulator_bringup omy_l100_leader_ai.launch.py 
+
+
+
+
+
+------------------  ros bridge start ------------------------
+
+~/ochansol/robotis/open_manipulator/docker/container.sh enter
+
+
+ros2 run rosbridge_server rosbridge_websocket --address 0.0.0.0 --port 9090
+
+---------------------- vr ---------------------------------------
+PC
+    flatpak run io.github.wivrn.wivrn
+
+vr
+    wivrn 실행
+
+
+둘이 재 연결시 ps -ef |grep wivrn 
+목록에서 프로세스 제거 후 다시 실행
