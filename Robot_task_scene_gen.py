@@ -96,7 +96,6 @@ class My_Robot_Task(tasks.BaseTask):
         asset_path = "/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_no_delay.usd"
 
         add_reference_to_stage(usd_path=asset_path, prim_path=self.prim_path)
-        import pdb; pdb.set_trace()
         gripper = ParallelGripper(
             end_effector_prim_path=f"{self.prim_path}/OMY_custom_no_delay/OMY/link6",
             # end_effector_prim_path="/World/Doosan_M1013/robotiq_arg2f_base_link",
@@ -105,7 +104,7 @@ class My_Robot_Task(tasks.BaseTask):
             joint_closed_positions=np.array([1.04, 1.04]),
             action_deltas=np.array([-0., 0.]),
         )
-        import pdb; pdb.set_trace()
+
 
         manipulator = SingleManipulator(
             prim_path=self.prim_path,
