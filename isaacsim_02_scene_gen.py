@@ -5,8 +5,7 @@ simulation_app = SimulationApp({"headless": True})
 from isaacsim.core.api import World
 from isaacsim.core.utils.types import ArticulationAction
 import numpy as np
-import sys 
-sys.path.append("/home/cubox/ochansol/isaac_code/python/sim2real/cal_depth_width")
+
 import Robot_task_scene_gen as Robot_task
 
 from isaacsim.core.api.objects.ground_plane import GroundPlane
@@ -20,7 +19,8 @@ import omni.replicator.core as rep
 import omni.timeline
 
 import sys
-sys.path.append("/home/uon/ochansol/isaac_code/isaac_chansol")
+import pathlib
+sys.path.append(f"{pathlib.Path.home()}/ochansol/isaac_chansol")
 import Utils.isaac_utils_51.rep_utils as csr
 import Utils.isaac_utils_51.scan_rep as scan_rep
 import Utils.isaac_utils_51.light_set as light
