@@ -30,10 +30,6 @@ from isaacsim.core.utils.types import ArticulationAction
 
 
 
-import roslibpy
-
-
-
 # Inheriting from the base class Follow Target
 class My_Robot_Task(tasks.BaseTask):
     def __init__(
