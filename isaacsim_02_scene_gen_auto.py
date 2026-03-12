@@ -1,3 +1,11 @@
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--start_num", type=int, default=0, help="starting episode number")
+parser.add_argument("--end_num", type=int, default=100, help="ending episode number")
+
+args = parser.parse_args()
+
+
 
 from isaacsim import SimulationApp
 
@@ -30,7 +38,7 @@ import Utils.isaac_utils_51.sanjabu_Writer as SW
 from Utils.Robot_45 import robot_configs, robot_policy
 import json
 import os
-
+from tqdm import tqdm
 
 carb.settings.get_settings().set("/rtx/post/motionblur/enabled", True)
 # 0: Disabled, 1: TAA, 2: FXAA, 3: DLSS, 4:RTXAA
@@ -225,35 +233,34 @@ config = {}
 
 # my_world.stop()
 
-episode_num = None
-while True:
-    if episode_num is None:
-        episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
-        for episode_num in episode_list:
-            if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
-                with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-                    action_data = json.load(f)
 
-                rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
-                if len(rgb_list) >= len(action_data)//4:
-                    print(f"Already exists : {episode_num} PNG , skip...")
-                    if episode_num == episode_list[-1]:
-                        print("All episodes are loaded.")
-                        simulation_app.close()
-                        sys.exit()
-                    continue
-                else:
-                    print("Load episode : ", episode_num)
-                    break
-            else:
-                with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-                    action_data = json.load(f)
-                print("Load episode : ", episode_num)
-                break
-    else:
-        with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-            action_data = json.load(f)
-        print("Load episode : ", episode_num)
+# while True:
+for episode_num in tqdm(range(args.start_num, args.end_num)):
+    # episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
+    # for episode_num in episode_list:
+    #     if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
+    #         with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+    #             action_data = json.load(f)
+
+    #         rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
+    #         if len(rgb_list) >= len(action_data)//4:
+    #             print(f"Already exists : {episode_num} PNG , skip...")
+    #             if episode_num == episode_list[-1]:
+    #                 print("All episodes are loaded.")
+    #                 simulation_app.close()
+    #                 sys.exit()
+    #             continue
+    #         else:
+    #             print("Load episode : ", episode_num)
+    #             break
+    #     else:
+    #         with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+    #             action_data = json.load(f)
+    #         print("Load episode : ", episode_num)
+    #         break
+
+    with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+        action_data = json.load(f)
 
     writer.set_path(output_path, rgb_path = f"rgb/{episode_num}",)
     action_i = 0
