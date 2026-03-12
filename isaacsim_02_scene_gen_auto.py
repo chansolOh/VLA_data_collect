@@ -236,6 +236,7 @@ config = {}
 
 # while True:
 for episode_num in tqdm(range(args.start_num, args.end_num)):
+    episode_num = f"{episode_num:04d}"
     # episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
     # for episode_num in episode_list:
     #     if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
