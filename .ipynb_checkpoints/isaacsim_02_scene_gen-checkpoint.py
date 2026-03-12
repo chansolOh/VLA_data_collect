@@ -32,24 +32,12 @@ import os
 
 
 
-carb.settings.get_settings().set("/rtx/post/motionblur/enabled", True)
-# 0: Disabled, 1: TAA, 2: FXAA, 3: DLSS, 4:RTXAA
-carb.settings.get_settings().set("/rtx/post/aa/op", 2)
-# (float): The fraction of the largest screen dimension to use as the maximum motion blur diameter.
-carb.settings.get_settings().set("/rtx/post/motionblur/maxBlurDiameterFraction", 0.4)
-# (float): Exposure time fraction in frames (1.0 = one frame duration) to sample.
-carb.settings.get_settings().set("/rtx/post/motionblur/exposureFraction", 4.0)
-# (int): Number of samples to use in the filter. A higher number improves quality at the cost of performance.
-carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 25)
-
-
 
 
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-dataset_path = "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_test"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY"
 output_cache_path = os.path.join(output_path, "cache")
 
 
@@ -138,26 +126,24 @@ sampled_model_dict={
         "path": os.path.join(obj_root_path, "apple/edited/apple.usd"),
         "size_rank": 0,
     },
-    # "paprika":{
-    #     "name":"paprika",
-    #     "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
-    #     "size_rank": 0,
-    # },
-    # "potato":{
-    #     "name":"potato",
-    #     "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
-    #     "size_rank": 0,
-    # },    
+    "paprika":{
+        "name":"paprika",
+        "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
+        "size_rank": 0,
+    },
+    "potato":{
+        "name":"potato",
+        "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
+        "size_rank": 0,
+    },    
 }
 
-box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_magenta"]]
-# box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_blue", "custom_box_12_12_08_yellow","custom_box_12_12_08_magenta"]]
+box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_blue", "custom_box_12_12_08_yellow","custom_box_12_12_08_magenta"]]
 box_rep_list = []
 for box_path in box_path_list:
     box_rep = scan_rep.Scan_Rep(
         prim_path = box_path,
         class_name = box_path.split("/")[-1],
-        scale=[1,1,1]
         )
     box_rep_list.append(box_rep)
 
@@ -222,7 +208,7 @@ ik_first_flag = True
 obj_reset_flag = True
 stop_flag = True
 gpu_dynamic_flag = 0
-joint_err_th = 0.3
+joint_err_th = 0.1
 record_flag = False
 
 action_list = []
@@ -231,10 +217,10 @@ config = {}
 # my_world.stop()
 
 while True:
-    episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
+    episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(output_path, "action") ) if i.endswith('.json')])
     for episode_num in episode_list:
         if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
-            with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+            with open( os.path.join(output_path, "action", f"{episode_num}.json"), 'r') as f:
                 action_data = json.load(f)
 
             rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
@@ -249,8 +235,6 @@ while True:
                 print("Load episode : ", episode_num)
                 break
         else:
-            with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-                action_data = json.load(f)
             print("Load episode : ", episode_num)
             break
 
@@ -259,7 +243,6 @@ while True:
     writer.set_path(output_path, rgb_path = f"rgb/{episode_num}",)
     action_i = 0
     print("Start simulation...")
-
     while simulation_app.is_running():
         my_world.step(render=False)
 
@@ -302,7 +285,7 @@ while True:
 
             my_robot.apply_action(ArticulationAction(
                             joint_positions = data["robot"]["joint_positions"],
-                            # joint_velocities = data["robot"]["joint_velocities"],
+                            joint_velocities = data["robot"]["joint_velocities"],
                             ))
             for OBJ in obj_rep_all_list:
                 pos_x,pos_y,pos_z = data["objects"][OBJ.class_name]["position"]
@@ -315,14 +298,11 @@ while True:
                     OBJ.prim.GetAttribute('xformOp:rotateXYZ').Set(csr.Gf.Vec3d(r,p,y))
                 elif OBJ.prim.HasAttribute('xformOp:orient'):
                     OBJ.prim.GetAttribute('xformOp:orient').Set( csr.np_to_GfQuatf([w,x,y,z]) )
-
             for i in range(5):   
                 my_world.step(render=False)
             writer.set_frame(frame_id=data["index"])
-
-
             if action_i % 4 == 0:
-                writer.dataset_path = output_path
+                writer.output_path = output_path
                 rep.orchestrator.step()
             print(action_i)
             action_i += 1

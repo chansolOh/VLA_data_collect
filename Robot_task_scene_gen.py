@@ -133,9 +133,8 @@ class My_Robot_Task(tasks.BaseTask):
 
     def set_solver(self):
         kinematics_solver = LulaKinematicsSolver(
-                            robot_description_path="/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom.yaml",
-                            # urdf_path="/nas/ochansol/isaac/sim2real/Robotis_Robotiq2f140.urdf",
-                            urdf_path = "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom_no_delay.urdf"
+                            robot_description_path  = "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom.yaml",
+                            urdf_path               = "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom_org.urdf"
         )
 
         return kinematics_solver

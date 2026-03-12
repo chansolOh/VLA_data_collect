@@ -1,38 +1,22 @@
-import roslibpy
-import numpy as np
-import cv2
-import base64
-import matplotlib.pyplot as plt
+import os
+from pathlib import Path
 
-client = roslibpy.Ros(host='192.168.0.244', port=9091)
-client.run()
+# 🔧 폴더 경로
+folder = Path("/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking/action")   # ← 여기 폴더 경로로 변경
 
-def cb(msg):
-    b = base64.b64decode(msg["data"])          # ✅ 진짜 이미지 bytes로 복원
-    arr = np.frombuffer(b, dtype=np.uint8)
-    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    plt.imshow(img) 
-    plt.show()
+# 1️⃣ json 파일만 가져오기 + 이름순 정렬
+files = sorted([f for f in folder.glob("*.json") if f.is_file()])
 
+# 2️⃣ 먼저 임시 이름으로 변경 (이름 충돌 방지)
+temp_files = []
+for i, f in enumerate(files):
+    tmp_name = folder / f"__tmp_{i:06d}.json"
+    f.rename(tmp_name)
+    temp_files.append(tmp_name)
 
-def cb_depth(msg):
-    # msg['data'] 는 base64 문자열인 경우가 일반적
-    raw = base64.b64decode(msg['data'])
+# 3️⃣ 최종 이름으로 변경 (0000.json, 0001.json ...)
+for i, f in enumerate(sorted(temp_files)):
+    new_name = folder / f"{i:04d}.json"
+    f.rename(new_name)
 
-    h = msg['height']
-    w = msg['width']
-    enc = msg.get('encoding', '')
-
-    if enc not in ('32FC1', '32FC1'):
-        print('encoding:', enc)
-
-    depth = np.frombuffer(raw, dtype=np.float32).reshape(h, w)
-    print(depth.shape, depth.dtype, np.nanmin(depth), np.nanmax(depth))
-
-# topic = roslibpy.Topic(client, '/right/camera/cam_top/color/image_rect_raw/compressed', 'sensor_msgs/msg/CompressedImage')
-# topic.subscribe(cb)
-
-topic2 = roslibpy.Topic(client, '/right/camera/cam_top/depth/image_rect_raw', 'sensor_msgs/msg/Image')
-topic2.subscribe(cb_depth)
-while True:
-    pass
+print("완료")

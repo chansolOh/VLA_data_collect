@@ -27,6 +27,9 @@ from omni.isaac.core.utils.extensions import enable_extension
 enable_extension("omni.kit.xr.core")
 enable_extension("omni.kit.xr.system.openxr")
 enable_extension("isaacsim.xr.openxr")
+enable_extension("omni.physx.ui")
+enable_extension("omni.physx")
+
 
 import sys
 sys.path.append("/home/uon/ochansol/isaac_code/isaac_chansol")
@@ -40,7 +43,7 @@ from pynput import keyboard
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking"
 
 
 
@@ -106,24 +109,26 @@ sampled_model_dict={
         "path": os.path.join(obj_root_path, "apple/edited/apple.usd"),
         "size_rank": 0,
     },
-    "paprika":{
-        "name":"paprika",
-        "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
-        "size_rank": 0,
-    },
-    "potato":{
-        "name":"potato",
-        "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
-        "size_rank": 0,
-    },    
+    # "paprika":{
+    #     "name":"paprika",
+    #     "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
+    #     "size_rank": 0,
+    # },
+    # "potato":{
+    #     "name":"potato",
+    #     "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
+    #     "size_rank": 0,
+    # },    
 }
 
-box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_blue", "custom_box_12_12_08_yellow","custom_box_12_12_08_magenta"]]
+# box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_blue", "custom_box_12_12_08_yellow","custom_box_12_12_08_magenta"]]
+box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_magenta"]]
 box_rep_list = []
 for box_path in box_path_list:
     box_rep = scan_rep.Scan_Rep(
         prim_path = box_path,
         class_name = box_path.split("/")[-1],
+        scale=[1,1,1]
         )
     box_rep_list.append(box_rep)
 

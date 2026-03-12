@@ -14,6 +14,7 @@ import omni
 import carb
 from isaacsim.util.debug_draw import _debug_draw
 from isaacsim.sensors.camera import Camera
+from isaacsim.core.utils.stage import add_reference_to_stage
 
 import omni.replicator.core as rep
 import omni.timeline
@@ -26,21 +27,20 @@ import Utils.isaac_utils_51.rep_utils as csr
 import Utils.isaac_utils_51.scan_rep as scan_rep
 import Utils.isaac_utils_51.light_set as light
 import Utils.isaac_utils_51.sanjabu_Writer as SW
-
+from Utils.Robot_45 import robot_configs, robot_policy
 import json
 import os
-
 
 
 carb.settings.get_settings().set("/rtx/post/motionblur/enabled", True)
 # 0: Disabled, 1: TAA, 2: FXAA, 3: DLSS, 4:RTXAA
 carb.settings.get_settings().set("/rtx/post/aa/op", 2)
 # (float): The fraction of the largest screen dimension to use as the maximum motion blur diameter.
-carb.settings.get_settings().set("/rtx/post/motionblur/maxBlurDiameterFraction", 0.4)
+carb.settings.get_settings().set("/rtx/post/motionblur/maxBlurDiameterFraction", 0.3)
 # (float): Exposure time fraction in frames (1.0 = one frame duration) to sample.
-carb.settings.get_settings().set("/rtx/post/motionblur/exposureFraction", 4.0)
+carb.settings.get_settings().set("/rtx/post/motionblur/exposureFraction", 2.0)
 # (int): Number of samples to use in the filter. A higher number improves quality at the cost of performance.
-carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 25)
+carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 
 
 
@@ -48,8 +48,8 @@ carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 25)
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-dataset_path = "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_test"
+dataset_path = "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_auto"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_auto" ## output을 다르게 쓸ㄸ
 output_cache_path = os.path.join(output_path, "cache")
 
 
@@ -64,7 +64,10 @@ stage = omni.usd.get_context().get_stage()
 
 
 
-my_robot_task = Robot_task.My_Robot_Task(name="robot_task" )
+Robot_Cfg = robot_configs.ROBOT_CONFIGS["Robotis_OMY_no_delay"]()
+my_robot_task = robot_policy.My_Robot_Task(robot_config=Robot_Cfg, name="robot_task" ,
+                idle_joint=np.array([0,-32,25,43,92,0,0,0,0,0])/180*np.pi 
+                )
 my_world.add_task(my_robot_task)
 my_world.reset()
 robot_name = my_robot_task.get_robot_name
@@ -72,7 +75,8 @@ robot_name = my_robot_task.get_robot_name
 my_robot = my_robot_task._robot
 my_robot_prim = my_robot_task.robot_prim
 
-env_prim = stage.GetPrimAtPath(my_robot_task.prim_path)
+env_prim = add_reference_to_stage(prim_path = "/World/env", usd_path ="/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd")
+
 
 light_list = csr.find_lights(env_prim)
 Lights = light.Light(light_list)
@@ -86,8 +90,8 @@ Lights.set_all_exposure(val=1)
 full_res=(1280,720)
 wrist_res=(848,480)
 
-full_cam_path = f"{my_robot_task.prim_path}/demo/full_camera"
-wrist_cam_path = f"{my_robot_task.prim_path}/OMY_custom_no_delay/OMY/link6/wrist_camera"
+full_cam_path = f"{str(env_prim.GetPrimPath())}/demo/full_camera"
+wrist_cam_path = f"{my_robot_task.prim_path}/OMY/link6/wrist_camera"
 
 full_camera = Camera(
     prim_path=full_cam_path,
@@ -132,42 +136,33 @@ rep.orchestrator.set_capture_on_play(False)
 
 
 obj_root_path = "/nas/ochansol/3d_model/scan_etc"
+
 sampled_model_dict={
     "apple":{
         "name":"apple",
-        "path": os.path.join(obj_root_path, "apple/edited/apple.usd"),
+        "path": "/nas/ochansol/3d_model/scan_etc/apple_test/apple.usd",
         "size_rank": 0,
+        "scale" : [0.1,0.1,0.1]
     },
-    # "paprika":{
-    #     "name":"paprika",
-    #     "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
-    #     "size_rank": 0,
-    # },
-    # "potato":{
-    #     "name":"potato",
-    #     "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
-    #     "size_rank": 0,
-    # },    
+    "custom_box_12_12_08_magenta":{
+        "name":"custom_box_12_12_08_magenta",
+        "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_magenta/custom_box_12_12_08_magenta.usd",
+        "size_rank": 0,
+        "scale" : [1,1,1]
+    }
 }
 
-box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_magenta"]]
-# box_path_list = [os.path.join(env_prim.GetPath().__str__(),i) for i in ["custom_box_12_12_08_blue", "custom_box_12_12_08_yellow","custom_box_12_12_08_magenta"]]
-box_rep_list = []
-for box_path in box_path_list:
-    box_rep = scan_rep.Scan_Rep(
-        prim_path = box_path,
-        class_name = box_path.split("/")[-1],
-        scale=[1,1,1]
-        )
-    box_rep_list.append(box_rep)
 
-obj_rep_all_list = [] + box_rep_list
+obj_rep_all_list = []
 for key in sampled_model_dict:
     model_attr = sampled_model_dict[key]
     print("model_attr : ", model_attr["name"])
     scan_obj = scan_rep.Scan_Rep(usd_path =  model_attr["path"],
                             class_name = model_attr["name"],
-                            size = model_attr["size_rank"],)
+                            size = model_attr["size_rank"],
+                            scale = model_attr.get("scale", [0.1,0.1,0.1])
+                            )
+    sampled_model_dict[key]["rep"] = scan_obj
     obj_rep_all_list.append(scan_obj)
 
 
@@ -230,31 +225,35 @@ config = {}
 
 # my_world.stop()
 
+episode_num = None
 while True:
-    episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
-    for episode_num in episode_list:
-        if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
-            with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-                action_data = json.load(f)
+    if episode_num is None:
+        episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
+        for episode_num in episode_list:
+            if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
+                with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+                    action_data = json.load(f)
 
-            rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
-            if len(rgb_list) >= len(action_data)//4:
-                print(f"Already exists : {episode_num} PNG , skip...")
-                if episode_num == episode_list[-1]:
-                    print("All episodes are loaded.")
-                    simulation_app.close()
-                    sys.exit()
-                continue
+                rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
+                if len(rgb_list) >= len(action_data)//4:
+                    print(f"Already exists : {episode_num} PNG , skip...")
+                    if episode_num == episode_list[-1]:
+                        print("All episodes are loaded.")
+                        simulation_app.close()
+                        sys.exit()
+                    continue
+                else:
+                    print("Load episode : ", episode_num)
+                    break
             else:
+                with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+                    action_data = json.load(f)
                 print("Load episode : ", episode_num)
                 break
-        else:
-            with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-                action_data = json.load(f)
-            print("Load episode : ", episode_num)
-            break
-
-
+    else:
+        with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
+            action_data = json.load(f)
+        print("Load episode : ", episode_num)
 
     writer.set_path(output_path, rgb_path = f"rgb/{episode_num}",)
     action_i = 0
@@ -273,7 +272,7 @@ while True:
             record_flag = False
 
             my_world.reset()
-            my_world.pause()
+            # my_world.pause()
 
         my_world.play()
 
@@ -288,6 +287,7 @@ while True:
                 record_flag = True
                 action_i = 0
                 writer.set_frame(frame_id=0)
+
                 print("Start playing...")
 
 
@@ -324,7 +324,7 @@ while True:
             if action_i % 4 == 0:
                 writer.dataset_path = output_path
                 rep.orchestrator.step()
-            print(action_i)
+            # print(action_i)
             action_i += 1
             if action_i >= len(action_data):
                 rep.orchestrator.pause()

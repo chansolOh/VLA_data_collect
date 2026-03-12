@@ -6,7 +6,7 @@ from isaacsim.core.api import World
 from isaacsim.core.utils.types import ArticulationAction
 import numpy as np
 import sys 
-sys.path.append("/home/cubox/ochansol/isaac_code/python/sim2real/cal_depth_width")
+sys.path.append("/home/uon/ochansol/isaac_code/python/VLA_data_collect")
 import Robot_task as Robot_task
 
 from isaacsim.core.api.objects.ground_plane import GroundPlane
@@ -19,24 +19,29 @@ from isaacsim.sensors.camera import Camera
 import omni.replicator.core as rep
 import omni.timeline
 
-import sys
-import getpass
-sys.path.append(f"/home/{getpass.getuser()}/ochansol/isaac_code/python/sim_4.5_ver/utils")
 import json
 import os
-import scan_rep
 import matplotlib.pyplot as plt
-import cs_utils as cs
-import cs_rep_utils as csr
-import light_set as light
-import sanjabu_Writer as SW
+
+from omni.isaac.core.utils.extensions import enable_extension
+enable_extension("omni.kit.xr.core")
+enable_extension("omni.kit.xr.system.openxr")
+enable_extension("isaacsim.xr.openxr")
+
+import sys
+sys.path.append("/home/uon/ochansol/isaac_code/isaac_chansol")
+import Utils.isaac_utils_51.rep_utils as csr
+import Utils.isaac_utils_51.scan_rep as scan_rep
+import Utils.isaac_utils_51.light_set as light
+
 from pynput import keyboard
+
 
 
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking"
 
 
 
@@ -85,16 +90,16 @@ sampled_model_dict={
         "path": os.path.join(obj_root_path, "apple/edited/apple.usd"),
         "size_rank": 0,
     },
-    "paprika":{
-        "name":"paprika",
-        "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
-        "size_rank": 0,
-    },
-    "potato":{
-        "name":"potato",
-        "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
-        "size_rank": 0,
-    },    
+    # "paprika":{
+    #     "name":"paprika",
+    #     "path": os.path.join(obj_root_path, "paprika/edited/paprika.usd"),
+    #     "size_rank": 0,
+    # },
+    # "potato":{
+    #     "name":"potato",
+    #     "path": os.path.join(obj_root_path, "potato/edited/potato.usd"),
+    #     "size_rank": 0,
+    # },    
 }
 
 obj_rep_all_list = []
