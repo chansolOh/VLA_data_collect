@@ -217,8 +217,9 @@ os.makedirs( os.path.join( output_path, "action"), exist_ok=True)
 episode_num = check_eps_num(output_path)
 
 def action_collect():
-    global action_list, index 
+    global action_list, index
     current_time = my_world.current_time - start_current_time
+    ee_pos, ee_quat = my_robot_task.compute_fk("OMY_grasp_joint")
     # print("recording... time : ", round(current_time,5))
     obj_conf = {}
 
@@ -232,10 +233,13 @@ def action_collect():
     action_list.append({
         "index" : index,
         "time": round(current_time,5),
+        "stage": stage,
         "robot":{
             "joint_positions": my_robot.get_joint_positions().tolist(),
             "joint_velocities": my_robot.get_joint_velocities().tolist(),
             "joint_names" : my_robot.dof_names,
+            "ee_position": ee_pos,
+            "ee_orientation": ee_quat,
         },
         "objects": obj_conf,
     })
