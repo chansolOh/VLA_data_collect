@@ -91,7 +91,7 @@ def rotation_between_vectors_to_quat(a, b):
 
 
 
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_auto"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim_OMY_apple_picking_auto_fixed_box"
 my_world = World(stage_units_in_meters=1.0,
                 physics_dt  = 0.01,
                 rendering_dt = 0.01)
@@ -124,17 +124,18 @@ light_1 = prim_utils.create_prim(
 
 obj_root_path = "/nas/ochansol/3d_model/scan_etc"
 sampled_model_dict={
+    "custom_box_12_12_08_magenta":{
+        "name":"custom_box_12_12_08_magenta",
+        "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_magenta/custom_box_12_12_08_magenta.usd",
+        "size_rank": 0,
+        "scale" : [1,1,1],
+        "position" : [0.25, -0.015, 0.041]
+    },
     "apple":{
         "name":"apple",
         "path": "/nas/ochansol/3d_model/scan_etc/apple_test/apple.usd",
         "size_rank": 0,
         "scale" : [0.1,0.1,0.1]
-    },
-    "custom_box_12_12_08_magenta":{
-        "name":"custom_box_12_12_08_magenta",
-        "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_magenta/custom_box_12_12_08_magenta.usd",
-        "size_rank": 0,
-        "scale" : [1,1,1]
     }
 }
 
@@ -145,7 +146,8 @@ for key in sampled_model_dict:
     scan_obj = scan_rep.Scan_Rep(usd_path =  model_attr["path"],
                             class_name = model_attr["name"],
                             size = model_attr["size_rank"],
-                            scale = model_attr.get("scale", [0.1,0.1,0.1])
+                            scale = model_attr.get("scale", [0.1,0.1,0.1]),
+                            position = model_attr.get("position", [0,0,0])
                             )
     sampled_model_dict[key]["rep"] = scan_obj
     obj_rep_all_list.append(scan_obj)
@@ -238,8 +240,8 @@ def action_collect():
             "joint_positions": my_robot.get_joint_positions().tolist(),
             "joint_velocities": my_robot.get_joint_velocities().tolist(),
             "joint_names" : my_robot.dof_names,
-            "ee_position": ee_pos,
-            "ee_orientation": ee_quat,
+            "ee_position": ee_pos.tolist(),
+            "ee_orientation": ee_quat.tolist(),
         },
         "objects": obj_conf,
     })
@@ -269,7 +271,7 @@ my_world.reset()
 # my_world.pause()
 
 
-csr.scatter_in_platform_area_spread(platform_rep, obj_rep_all_list, fixed_first = False, rotation=[["x","y","z"],["z"]])
+csr.scatter_in_platform_area_spread(platform_rep, obj_rep_all_list, fixed_first = True, rotation=[["x","y","z"],["z"]])
 while True:
     my_world.step(render=False)
     if rrt_atempt_count > 5:
@@ -290,7 +292,7 @@ while True:
 
         my_world.reset()
         # my_world.pause()
-        csr.scatter_in_platform_area_spread(platform_rep, obj_rep_all_list, fixed_first = False, rotation=[["x","y","z"],["z"]])
+        csr.scatter_in_platform_area_spread(platform_rep, obj_rep_all_list, fixed_first = True, rotation=[["x","y","z"],[]])
 
 
 
