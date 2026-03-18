@@ -35,6 +35,7 @@ import Utils.isaac_utils_51.rep_utils as csr
 import Utils.isaac_utils_51.scan_rep as scan_rep
 import Utils.isaac_utils_51.light_set as light
 import Utils.isaac_utils_51.sanjabu_Writer as SW
+import Utils.isaac_utils_51.augmentation as aug
 from Utils.Robot_45 import robot_configs, robot_policy
 import json
 import os
@@ -84,6 +85,16 @@ my_robot = my_robot_task._robot
 my_robot_prim = my_robot_task.robot_prim
 
 env_prim = add_reference_to_stage(prim_path = "/World/env", usd_path ="/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd")
+
+
+vis_plane = csr.find_target_name(env_prim, ["Mesh"], "vis_plane")
+for plane in vis_plane:
+    aug.random_material(stage, plane, plane.GetChildren() )
+
+
+
+
+
 
 
 light_list = csr.find_lights(env_prim)
