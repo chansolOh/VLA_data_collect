@@ -272,7 +272,9 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
     #             action_data = json.load(f)
     #         print("Load episode : ", episode_num)
     #         break
-
+    if not os.path.exists( os.path.joint(dataset_path, "action", f"{episode_num}.json") ):
+        print(f"Episode {episode_num} does not exist, skip...")
+        continue
     with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
         action_data = json.load(f)
 
