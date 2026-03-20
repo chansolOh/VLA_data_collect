@@ -139,6 +139,7 @@ def _reset_episode(context, runtime_state, scatter_config):
     runtime_state["index"] = 0
     runtime_state["apple_pos_buffer"] = []
     runtime_state["actions"] = []
+    runtime_state["stage_enter_time"] = 0.0
 
     my_world.reset()
     _scatter_objects(
@@ -149,7 +150,19 @@ def _reset_episode(context, runtime_state, scatter_config):
     )
 
 
-def run_action_collection(context, fixed_box_position=False, render=None):
+def advance_task_stage(runtime_state, current_time):
+    runtime_state["task_stage"] += 1
+    runtime_state["stage_enter_time"] = current_time
+
+
+def has_stage_timed_out(runtime_state, current_time, stage_timeouts):
+    stage_timeout = stage_timeouts.get(runtime_state["task_stage"])
+    if stage_timeout is None:
+        return False
+    return (current_time - runtime_state["stage_enter_time"]) > stage_timeout
+
+
+def run_action_collection(context, fixed_box_position=False, render=None, stage_timeouts=None):
     output_path = context["output_path"]
     my_world = context["my_world"]
     my_robot_task = context["my_robot_task"]
@@ -164,6 +177,9 @@ def run_action_collection(context, fixed_box_position=False, render=None):
 
     if render is None:
         render = context.get("render", True)
+
+    if stage_timeouts is None:
+        stage_timeouts = {}
 
     scatter_config = get_place_scatter_config(fixed_box_position)
 
@@ -186,6 +202,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
         "actions": [],
         "episode_num": check_eps_num(output_path),
         "init_diff_grasp_gripper": None,
+        "stage_enter_time": 0.0,
     }
 
     cam_vec = np.array([0, -1, 0])
@@ -219,6 +236,14 @@ def run_action_collection(context, fixed_box_position=False, render=None):
         place_quat = np.array(place_pose["rotation"])
         obstacle.set_world_pose(position=place_pos, orientation=place_quat)
 
+        if has_stage_timed_out(runtime_state, my_world.current_time, stage_timeouts):
+            print(
+                f"stage {runtime_state['task_stage']} timeout : "
+                f"{my_world.current_time - runtime_state['stage_enter_time']:.3f}s"
+            )
+            my_world.stop()
+            continue
+
         if runtime_state["task_stage"] == 0:
             apple_pos_buffer = runtime_state["apple_pos_buffer"]
             if len(apple_pos_buffer) < 30:
@@ -228,7 +253,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
                 apple_pos_buffer.append(picking_pos)
 
                 if np.std(apple_pos_buffer, axis=0).mean() < 0.0001:
-                    runtime_state["task_stage"] += 1
+                    advance_task_stage(runtime_state, my_world.current_time)
                     runtime_state["rrt_flag"] = True
                     runtime_state["plan"] = None
                     runtime_state["compute_target_flag"] = True
@@ -266,7 +291,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["view_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["view_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.05:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
@@ -319,7 +344,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["target_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["target_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.03:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
@@ -351,7 +376,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["target_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["target_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.03:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
@@ -368,7 +393,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             gripper_joint_idx = my_robot.get_dof_index("rh_r1_joint")
             gripper_joint_effort = my_robot.get_measured_joint_efforts(joint_indices=np.array([gripper_joint_idx]))
             if gripper_joint_effort > 0.5:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["init_diff_grasp_gripper"] = np.abs(picking_pos - ee_pos)
@@ -399,7 +424,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["target_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["target_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.03:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
@@ -439,7 +464,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["target_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["target_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.03:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
@@ -457,7 +482,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
 
             gripper_joints = np.abs(my_robot_task.get_joint_positions()[[6, 7]])
             if np.sum(gripper_joints) < 0.001:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
 
@@ -477,7 +502,7 @@ def run_action_collection(context, fixed_box_position=False, render=None):
             pos_crit = np.abs(np.array(ee_pos) - runtime_state["view_pos"]).sum()
             ori_crit = np.abs(mat_utils.euler_to_quat(ee_euler, degrees=True) - runtime_state["view_quat"]).sum()
             if pos_crit < 0.005 and ori_crit < 0.03:
-                runtime_state["task_stage"] += 1
+                advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
                 runtime_state["compute_target_flag"] = True
