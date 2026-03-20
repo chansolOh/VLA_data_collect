@@ -7,7 +7,7 @@ if str(CURRENT_DIR) not in sys.path:
 
 from isaacsim import SimulationApp
 
-simulation_app = SimulationApp({"headless": False})
+simulation_app = SimulationApp({"headless": True})
 
 from omni.isaac.core.utils.extensions import enable_extension
 
@@ -19,7 +19,7 @@ def main():
     enable_extension("omni.physx")
 
     environment_context = setup_environment()
-    environment_context["render"] = True
+    environment_context["render"] = False
     run_action_collection(environment_context, fixed_box_position=False)
 
 
