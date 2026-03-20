@@ -3,7 +3,7 @@ import json
 
 from isaacsim import SimulationApp
 
-simulation_app = SimulationApp({"headless": True})
+simulation_app = SimulationApp({"headless": False})
 
 from isaacsim.core.api import World
 
@@ -273,7 +273,7 @@ my_world.reset()
 
 csr.scatter_in_platform_area_spread(platform_rep, obj_rep_all_list, fixed_first = True, rotation=[["x","y","z"],["z"]])
 while True:
-    my_world.step(render=False)
+    my_world.step(render=True)
     if rrt_atempt_count > 5:
         my_world.stop()
 
@@ -637,8 +637,8 @@ while True:
             my_robot.apply_action(ArticulationAction(
                                     joint_indices=[6,7] ,
                                   joint_positions = [0.0,0.0]) )
-            
-            gripper_joints = my_robot_task.get_joint_positions()[[6,7]]
+
+            gripper_joints = np.abs(my_robot_task.get_joint_positions()[[6,7]])
             if np.sum(gripper_joints) < 0.001:
                 stage += 1
                 rrt_flag = True
@@ -678,26 +678,26 @@ while True:
 
 
 
-        elif stage == 9:
-            center_diff = np.abs(picking_pos - place_pos).sum()
-            if center_diff < 0.03:
-                print("success! center_diff : ", center_diff)
-                os.makedirs( os.path.join( output_path, "action"), exist_ok=True)
-                with open( os.path.join(output_path, "action", f"{episode_num:04d}.json"), 'w') as f:
-                    json.dump(action_list, f, indent=4)
+        # elif stage == 9:
+        #     center_diff = np.abs(picking_pos - place_pos).sum()
+        #     if center_diff < 0.03:
+        #         print("success! center_diff : ", center_diff)
+        #         os.makedirs( os.path.join( output_path, "action"), exist_ok=True)
+        #         with open( os.path.join(output_path, "action", f"{episode_num:04d}.json"), 'w') as f:
+        #             json.dump(action_list, f, indent=4)
 
-                print(f"Saved : {os.path.join(output_path, 'action', f'{episode_num:04d}.json')}")
+        #         print(f"Saved : {os.path.join(output_path, 'action', f'{episode_num:04d}.json')}")
 
-                episode_num = check_eps_num(output_path)
-                my_world.stop()
-                continue
-            else:
-                print("failed... center_diff : ", center_diff)
-                my_world.stop()
-                continue
+        #         episode_num = check_eps_num(output_path)
+        #         my_world.stop()
+        #         continue
+        #     else:
+        #         print("failed... center_diff : ", center_diff)
+        #         my_world.stop()
+        #         continue
 
 
-        if stage>=1:
-            action_collect()
+        # if stage>=1:
+        #     action_collect()
         frame_counter += 1
 
