@@ -61,7 +61,7 @@ def collect_action_snapshot(context, runtime_state):
     obj_rep_all_list = context["obj_rep_all_list"]
 
     current_time = my_world.current_time - runtime_state["start_current_time"]
-    ee_pos, ee_quat = my_robot_task.compute_fk("OMY_grasp_joint")
+    ee_pos, ee_euler = my_robot_task.compute_fk("OMY_grasp_joint")
     obj_conf = {}
 
     for obj_rep in obj_rep_all_list:
@@ -81,11 +81,24 @@ def collect_action_snapshot(context, runtime_state):
                 "joint_velocities": my_robot.get_joint_velocities().tolist(),
                 "joint_names": my_robot.dof_names,
                 "ee_position": ee_pos.tolist(),
-                "ee_orientation": ee_quat.tolist(),
+                "ee_quat": mat_utils.euler_to_quat(ee_euler,degrees=True).tolist(),
+                "ee_delta_position": [0, 0, 0],
+                "ee_delta_quat": [1, 0, 0, 0],
+
             },
             "objects": obj_conf,
         }
     )
+    if runtime_state["index"] > 0:
+        runtime_state["action_list"][runtime_state["index"]-1]["robot"]["ee_delta_position"] = \
+            (ee_pos - runtime_state["action_list"][runtime_state["index"]-1]["robot"]["ee_position"]).tolist()
+        
+        quat_t = R.from_quat(mat_utils.euler_to_quat(ee_euler,degrees=True)[[1,2,3,0]] )
+        quat_tm1 = R.from_quat(np.array(runtime_state["action_list"][runtime_state["index"]-1]["robot"]["ee_quat"])[[1,2,3,0]])
+
+        runtime_state["action_list"][runtime_state["index"]-1]["robot"]["ee_delta_quat"] = \
+            (quat_tm1.inv() * quat_t).as_quat()[[3,0,1,2]].tolist()
+
     runtime_state["index"] += 1
 
 
@@ -96,6 +109,7 @@ def save_action_episode(output_path, runtime_state):
         json.dump(runtime_state["action_list"], file, indent=4)
 
     print(f"Saved : {save_path}")
+    runtime_state["saved_episode_count"] += 1
     runtime_state["episode_num"] = check_eps_num(output_path)
 
 
@@ -162,7 +176,7 @@ def has_stage_timed_out(runtime_state, current_time, stage_timeouts):
     return (current_time - runtime_state["stage_enter_time"]) > stage_timeout
 
 
-def run_action_collection(context, fixed_box_position=False, render=None, stage_timeouts=None):
+def run_action_collection(context, fixed_box_position=False, render=None, stage_timeouts=None, max_episodes=None):
     output_path = context["output_path"]
     my_world = context["my_world"]
     my_robot_task = context["my_robot_task"]
@@ -201,6 +215,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
         "view_quat": None,
         "actions": [],
         "episode_num": check_eps_num(output_path),
+        "saved_episode_count": 0,
         "init_diff_grasp_gripper": None,
         "stage_enter_time": 0.0,
     }
@@ -519,6 +534,9 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
             if center_diff < 0.03:
                 print("success! center_diff : ", center_diff)
                 save_action_episode(output_path, runtime_state)
+                if max_episodes is not None and runtime_state["saved_episode_count"] >= max_episodes:
+                    print(f"Reached max_episodes : {max_episodes}")
+                    return runtime_state
                 my_world.stop()
                 continue
             else:
