@@ -58,7 +58,7 @@ carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
 dataset_path = "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" ## output을 다르게 쓸ㄸ
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_no_aug" ## output을 다르게 쓸ㄸ
 output_cache_path = os.path.join(output_path, "cache")
 
 
@@ -274,8 +274,8 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
     if not os.path.exists( os.path.join(dataset_path, "action", f"{episode_num}.json") ):
         print(f"Episode {episode_num} does not exist, skip...")
         continue
-    for plane in vis_plane:
-        aug.random_material(stage, plane, plane.GetChildren() )
+    # for plane in vis_plane:
+    #     aug.random_material(stage, plane, plane.GetChildren() )
     with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
         action_data = json.load(f)
 
