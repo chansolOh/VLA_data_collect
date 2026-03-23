@@ -57,8 +57,8 @@ carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-dataset_path = "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_no_aug" ## output을 다르게 쓸ㄸ
+dataset_path = "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_random_place_ALL"
+output_path =  "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_random_place_ALL" ## output을 다르게 쓸ㄸ
 output_cache_path = os.path.join(output_path, "cache")
 
 
