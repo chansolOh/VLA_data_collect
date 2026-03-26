@@ -22,16 +22,8 @@ from Utils.isaac_utils_51 import scan_rep
 import Utils.isaac_utils_51.rep_utils as csr
 
 
-OUTPUT_PATH = "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_random_place_ALL"
-ENV_USD_PATH = "/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd"
-ROBOT_DESCRIPTION_PATH = "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom_RRT.yaml"
-ROBOT_URDF_PATH = "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom.urdf"
-RRT_CONFIG_PATH = "/home/uon/ochansol/isaac_code/isaac_chansol/Utils/Robot_45/basic_ik/motion_policy_configs/omy/planner_config.yaml"
 
-
-def setup_environment():
-    carb.log_info("Setting up modular auto RRT environment")
-
+def setup_environment(**kwargs):
     my_world = World(stage_units_in_meters=1.0, physics_dt=0.01, rendering_dt=0.01)
 
     robot_cfg = robot_configs.ROBOT_CONFIGS["Robotis_OMY"]()
@@ -45,7 +37,7 @@ def setup_environment():
 
     usd_stage = omni.usd.get_context().get_stage()
     my_robot = my_robot_task._robot
-    env_prim = add_reference_to_stage(prim_path="/World/env", usd_path=ENV_USD_PATH)
+    env_prim = add_reference_to_stage(prim_path="/World/env", usd_path=kwargs["ENV_USD_PATH"])
 
     prim_utils.create_prim(
         "/World/Light_1",
@@ -126,19 +118,19 @@ def setup_environment():
     )
 
     rrt = RRT(
-        robot_description_path=ROBOT_DESCRIPTION_PATH,
-        urdf_path=ROBOT_URDF_PATH,
-        rrt_config_path=RRT_CONFIG_PATH,
+        robot_description_path=kwargs["ROBOT_DESCRIPTION_PATH"],
+        urdf_path=kwargs["ROBOT_URDF_PATH"],
+        rrt_config_path=kwargs["RRT_CONFIG_PATH"],
         end_effector_frame_name="OMY_grasp_joint",
     )
     rrt.add_obstacle(obstacle)
     rrt.set_max_iterations(8000)
     path_planner_visualizer = PathPlannerVisualizer(my_robot, rrt)
 
-    os.makedirs(os.path.join(OUTPUT_PATH, "action"), exist_ok=True)
+    os.makedirs(os.path.join(kwargs["OUTPUT_PATH"], "action"), exist_ok=True)
 
     return {
-        "output_path": OUTPUT_PATH,
+        "output_path": kwargs["OUTPUT_PATH"],
         "my_world": my_world,
         "usd_stage": usd_stage,
         "my_robot_task": my_robot_task,

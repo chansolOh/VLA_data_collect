@@ -2,7 +2,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--start_num", type=int, default=0, help="starting episode number")
 parser.add_argument("--end_num", type=int, default=100, help="ending episode number")
-
+parser.add_argument("--augementation", action="store_true", help="whether to apply augmentation during data collection")
 args = parser.parse_args()
 
 
