@@ -1,6 +1,11 @@
 import sys
 from pathlib import Path
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--fixed_box", action="store_true", help="whether to use fixed box position during data collection")
+
+
 CURRENT_DIR = Path(__file__).resolve().parent
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
@@ -16,8 +21,8 @@ enable_extension("omni.physx")
 from auto_rrt_modular.task_execution.run_apple_picking import run_action_collection
 from python.VLA_data_collect.auto_rrt_modular.environment_setup.setup_apple_picking import setup_environment
 
-
-fixed_box_position = True
+args = parser.parse_args()
+fixed_box_position = args.fixed_box
 
 
 
