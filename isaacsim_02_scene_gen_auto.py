@@ -2,7 +2,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--start_num", type=int, default=0, help="starting episode number")
 parser.add_argument("--end_num", type=int, default=100, help="ending episode number")
-parser.add_argument("--augementation", action="store_true", help="whether to apply augmentation during data collection")
+parser.add_argument("--augmentation", action="store_true", help="whether to apply augmentation during data collection")
+parser.add_argument("--detection", action="store_true", help="whether to apply detection during data collection")
 args = parser.parse_args()
 
 
@@ -136,6 +137,8 @@ writer.initialize(
     output_dir                      = output_cache_path,
     rgb                             = True,
     distance_to_image_plane         = False,
+    instance_segmentation           = args.detection,
+    bounding_box                    = args.detection,
 )
 writer.set_path(output_cache_path,
                 rgb_path = "rgb",

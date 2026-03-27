@@ -71,7 +71,6 @@ def plot_fk_chunks_3d_single_arm(
     chunk_values = np.linspace(0.0, 1.0, num_chunks)
     chunk_colors = cmap(chunk_values)
     norm = colors.Normalize(vmin=0, vmax=max(num_chunks - 1, 1))
-
     for data_idx in range(num_data):
         xyz = pts[data_idx]  # (C, 3)
 
@@ -117,11 +116,12 @@ def plot_fk_chunks_3d_single_arm(
             xyz[0, 1],
             xyz[0, 2],
             f"{data_idx}",
-            fontsize=8,
+            fontsize=11,
+            fontweight="bold",
             color="navy",
             ha="left",
             va="bottom",
-            bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none", alpha=0.65),
+            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="navy", linewidth=0.6, alpha=0.9),
         )
         ax.scatter(
             xyz[-1, 0],
@@ -138,11 +138,12 @@ def plot_fk_chunks_3d_single_arm(
             xyz[-1, 1],
             xyz[-1, 2],
             f"{data_idx}",
-            fontsize=8,
+            fontsize=11,
+            fontweight="bold",
             color="darkred",
             ha="left",
             va="bottom",
-            bbox=dict(boxstyle="round,pad=0.15", facecolor="white", edgecolor="none", alpha=0.65),
+            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="darkred", linewidth=0.6, alpha=0.9),
         )
 
     ax.set_xlabel("X")
@@ -253,8 +254,9 @@ joint_err_th = 0.001
 
 my_world.stop()
 
+# joint_traj_path = "/home/uon/ochansol/isaac_code/python/VLA_data_collect/infer_data_viz/groot_action_infer_samples"
 joint_traj_path = "/nas/Dataset/dualarm/groot_action_infer_samples"
-joint_traj_list = sorted(os.listdir(joint_traj_path))
+joint_traj_list = sorted(os.listdir(joint_traj_path))[:50]
 joint_traj_arr = []
 for data in joint_traj_list:
     arr = np.load(os.path.join(joint_traj_path, data))
