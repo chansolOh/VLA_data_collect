@@ -4,6 +4,9 @@ parser.add_argument("--start_num", type=int, default=0, help="starting episode n
 parser.add_argument("--end_num", type=int, default=100, help="ending episode number")
 parser.add_argument("--augmentation", action="store_true", help="whether to apply augmentation during data collection")
 parser.add_argument("--detection", action="store_true", help="whether to apply detection during data collection")
+parser.add_argument("--output_path", type=str, default="", help="output path for collected data")
+parser.add_argument("--dataset_path", type=str, default="", help="dataset path for loading action json files")
+
 args = parser.parse_args()
 
 
@@ -58,8 +61,8 @@ carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 root_path = "/nas/ochansol/isaac"
-dataset_path = "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL"
-output_path =  "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" ## output을 다르게 쓸ㄸ
+dataset_path = args.dataset_path
+output_path =  args.output_path ## output을 다르게 쓸ㄸ
 output_cache_path = os.path.join(output_path, "cache")
 
 

@@ -26,3 +26,16 @@ vr
 
 둘이 재 연결시 ps -ef |grep wivrn 
 목록에서 프로세스 제거 후 다시 실행
+
+
+
+--------------------------------------------------------------
+auto
+
+uv run isaacsim_02_scene_gen_auto.py 
+--output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
+--dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
+--start_num=0 \
+--end_num=100 \
+--augmentation \
+--detection
