@@ -102,6 +102,7 @@ robot_name = my_robot_task.get_robot_name
 # my_robot = my_world.scene.get_object(robot_name)
 my_robot = my_robot_task._robot
 my_robot_prim = my_robot_task.robot_prim
+my_robot_task.set_semantic_labels()
 
 env_prim = add_reference_to_stage(prim_path = "/World/env", usd_path ="/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd")
 
