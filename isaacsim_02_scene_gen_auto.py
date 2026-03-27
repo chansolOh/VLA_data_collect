@@ -60,11 +60,26 @@ carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 
 
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
-root_path = "/nas/ochansol/isaac"
 dataset_path = args.dataset_path
 output_path =  args.output_path ## output을 다르게 쓸ㄸ
 output_cache_path = os.path.join(output_path, "cache")
 
+writer_dict = {
+    "output_dir"                    : output_cache_path,
+    "rgb"                           : True,
+    "bounding_box_2d_loose"         : args.detection,
+    "bounding_box_2d_tight"         : False,
+    "bounding_box_3d"               : False,
+    "distance_to_camera"            : False,
+    "distance_to_image_plane"       : False,
+    "instance_segmentation"         : args.detection,
+    "normals"                       : False,
+    "semantic_segmentation"         : False,
+    "use_common_output_dir"         : False,
+    "pointcloud_include_unlabelled" : False,
+    "pointcloud"                    : False,
+    "occlusion"                     : False,
+}
 
 
 
@@ -136,13 +151,7 @@ render_product_full = full_camera._render_product
 render_product_wrist = wrist_camera._render_product
 # render_product_side = rep.create.render_product(side_view_camera, cam_conf["output_size"])
 writer = rep.WriterRegistry.get("SanjabuWriter")
-writer.initialize(
-    output_dir                      = output_cache_path,
-    rgb                             = True,
-    distance_to_image_plane         = False,
-    instance_segmentation           = args.detection,
-    bounding_box                    = args.detection,
-)
+writer.initialize(**writer_dict)
 writer.set_path(output_cache_path,
                 rgb_path = "rgb",
                 bounding_box_path = "bbox",
