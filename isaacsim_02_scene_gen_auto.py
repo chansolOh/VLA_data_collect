@@ -289,7 +289,7 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
     if not os.path.exists( os.path.join(dataset_path, "action", f"{episode_num}.json") ):
         print(f"Episode {episode_num} does not exist, skip...")
         continue
-    if args.augementation:
+    if args.augmentation:
         for plane in vis_plane:
             aug.random_material(stage, plane, plane.GetChildren() )
     with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:

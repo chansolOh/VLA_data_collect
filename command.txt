@@ -32,7 +32,7 @@ vr
 --------------------------------------------------------------
 auto
 
-uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py 
+uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
 --output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_aug" \
 --dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
 --start_num=0 \
