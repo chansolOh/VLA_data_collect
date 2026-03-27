@@ -295,7 +295,15 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
     with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
         action_data = json.load(f)
 
-    writer.set_path(output_path, rgb_path = f"rgb/{episode_num}",)
+    writer.set_path(output_path, 
+                    rgb_path = f"rgb/{episode_num}",)
+    writer.set_path(output_cache_path,
+                rgb_path                        = f"rgb/{episode_num}",
+                bounding_box_path               = f"bbox/{episode_num}",
+                distance_to_image_plane_path    = f"depth/{episode_num}",
+                instance_segmentation_path      = f"inst_seg/{episode_num}",
+                pointcloud_path                 = f"pointcloud/{episode_num}",
+                normals_path                    = f"normals/{episode_num}",)
     action_i = 0
     print("Start simulation...")
 
