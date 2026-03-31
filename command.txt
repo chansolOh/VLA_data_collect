@@ -39,3 +39,13 @@ uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
 --end_num=100 \
 --augmentation \
 --detection
+
+
+uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
+--output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_random_light_aug_detect" \
+--dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
+--start_num=0 \
+--end_num=100 \
+--augmentation \
+--detection \
+--light_random

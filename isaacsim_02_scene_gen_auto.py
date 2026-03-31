@@ -6,7 +6,7 @@ parser.add_argument("--augmentation", action="store_true", help="whether to appl
 parser.add_argument("--detection", action="store_true", help="whether to apply detection during data collection")
 parser.add_argument("--output_path", type=str, default="", help="output path for collected data")
 parser.add_argument("--dataset_path", type=str, default="", help="dataset path for loading action json files")
-
+parser.add_argument("--light_random", action="store_true", help="whether to randomize light during data collection")
 args = parser.parse_args()
 
 
@@ -55,10 +55,12 @@ carb.settings.get_settings().set("/rtx/post/motionblur/exposureFraction", 2.0)
 # (int): Number of samples to use in the filter. A higher number improves quality at the cost of performance.
 carb.settings.get_settings().set("/rtx/post/motionblur/numSamples", 20)
 
+carb.settings.get_settings().set("/rtx/reflections/sampledLighting/samplesPerPixel", 8)
+carb.settings.get_settings().set("/rtx/directLighting/sampledLighting/samplesPerPixel", 8)
+carb.settings.get_settings().set("/rtx/shadows/enabled", True)
 
 
-
-
+light_random = args.light_random
 object_path_list = ["/nas/Dataset/Dataset_2025/sim2real"]
 dataset_path = args.dataset_path
 output_path =  args.output_path ## output을 다르게 쓸ㄸ
@@ -260,7 +262,6 @@ config = {}
 
 # my_world.stop()
 
-
 # while True:
 for episode_num in tqdm(range(args.start_num, args.end_num)):
     episode_num = f"{episode_num:04d}"
@@ -318,7 +319,7 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
             obj_reset_flag = True
             stop_flag = False
             record_flag = False
-
+            
             my_world.reset()
             # my_world.pause()
 
@@ -345,7 +346,9 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
             # if my_world.current_time_step_index <= 1:
             #     my_world.reset() 
             # i += 1
-
+            if light_random:
+                Lights.random_trans(1.5)
+                Lights.random_exposure(1)
             data = action_data[action_i]
 
             my_robot.apply_action(ArticulationAction(
@@ -371,7 +374,8 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
 
             if action_i % 4 == 0:
                 writer.dataset_path = output_path
-                rep.orchestrator.step()
+                with rep.trigger.on_frame(num_frames=1, rt_subframes=10):
+                    rep.orchestrator.step()
             # print(action_i)
             action_i += 1
             if action_i >= len(action_data):
