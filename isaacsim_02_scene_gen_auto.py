@@ -9,6 +9,8 @@ parser.add_argument("--dataset_path", type=str, default="", help="dataset path f
 parser.add_argument("--light_random", action="store_true", help="whether to randomize light during data collection")
 args = parser.parse_args()
 
+# args.dataset_path = f"/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" 
+# args.output_path = f"/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/test2"
 
 
 from isaacsim import SimulationApp
@@ -43,6 +45,7 @@ import Utils.isaac_utils_51.augmentation as aug
 from Utils.Robot_45 import robot_configs, robot_policy
 import json
 import os
+import gc
 from tqdm import tqdm
 
 carb.settings.get_settings().set("/rtx/post/motionblur/enabled", True)
@@ -260,6 +263,13 @@ record_flag = False
 action_list = []
 config = {}
 
+
+def cleanup_rendering_state():
+    rep.orchestrator.stop()
+    for _ in range(3):
+        omni.kit.app.get_app().update()
+    gc.collect()
+
 # my_world.stop()
 
 # while True:
@@ -291,6 +301,9 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
     if not os.path.exists( os.path.join(dataset_path, "action", f"{episode_num}.json") ):
         print(f"Episode {episode_num} does not exist, skip...")
         continue
+
+    cleanup_rendering_state()
+
     if args.augmentation:
         for plane in vis_plane:
             aug.random_material(stage, plane, plane.GetChildren() )
@@ -374,13 +387,13 @@ for episode_num in tqdm(range(args.start_num, args.end_num)):
 
             if action_i % 4 == 0:
                 writer.dataset_path = output_path
-                with rep.trigger.on_frame(num_frames=1, rt_subframes=10):
-                    rep.orchestrator.step()
+                rep.orchestrator.step(rt_subframes=10)
             # print(action_i)
             action_i += 1
             if action_i >= len(action_data):
                 rep.orchestrator.pause()
                 my_world.stop()
+                cleanup_rendering_state()
                 # simulation_app.close()
                 break
 
