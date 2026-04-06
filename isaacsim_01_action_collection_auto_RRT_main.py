@@ -4,7 +4,7 @@ from pathlib import Path
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--fixed_box", action="store_true", help="whether to use fixed box position during data collection")
-
+parser.add_argument("--output_path", type=str, help="path to save collected data")
 
 CURRENT_DIR = Path(__file__).resolve().parent
 if str(CURRENT_DIR) not in sys.path:
@@ -27,9 +27,7 @@ fixed_box_position = args.fixed_box
 
 
 configs={
-    "OUTPUT_PATH": "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
-        if fixed_box_position else "/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_random_place_ALL",
-
+    "OUTPUT_PATH": args.output_path,
     "ENV_USD_PATH": "/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd",
     "ROBOT_DESCRIPTION_PATH": "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom_RRT.yaml",
     "ROBOT_URDF_PATH": "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom.urdf",

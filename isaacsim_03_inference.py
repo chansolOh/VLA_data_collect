@@ -132,7 +132,7 @@ def main():
 
 
             state = my_robot_task.get_joint_positions()[[0,1,2,3,4,5,7]].tolist()  # joint state + gripper state
-            # state[-1]/=2
+            state[-1]/=1.7
             # state = np.array(Robot_inst.get_state(action_type="joint"))[[0,1,2,3,4,5,-1]].tolist()  # joint state + gripper state
             full_rgb = annotator_full.get_data()
             wrist_rgb = annotator_wrist.get_data()
@@ -152,7 +152,7 @@ def main():
 
             if client.action is not None:
                 infer_action = deepcopy(client.action)
-                infer_action[-1] *= 2
+                infer_action[-1] *= 1.7
 
                 my_robot_task.apply_action(
                     joint_indices=[0,1,2,3,4,5,7],
