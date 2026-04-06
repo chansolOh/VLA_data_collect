@@ -29,8 +29,17 @@ vr
 
 
 
---------------------------------------------------------------
-auto
+
+
+
+----------------------  action gen(auto) ------------------------------
+
+python ./python/VLA_data_collect/isaacsim_01_action_collection_auto_RRT_main.py --output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/test"
+
+
+
+
+-------------------------  image gen(auto)  -------------------------------------
 
 uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
 --output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_aug" \

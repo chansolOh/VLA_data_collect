@@ -31,7 +31,7 @@ configs={
     "ENV_USD_PATH": "/nas/ochansol/isaac/sim2real/uon_vla_demo_robotis_env.usd",
     "ROBOT_DESCRIPTION_PATH": "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom_RRT.yaml",
     "ROBOT_URDF_PATH": "/nas/ochansol/isaac/USD/robots/manipulator/Robotis_OMY/config/OMY_custom.urdf",
-    "RRT_CONFIG_PATH": "/home/uon/ochansol/isaac_code/isaac_chansol/Utils/Robot_45/basic_ik/motion_policy_configs/omy/planner_config.yaml"
+    "RRT_CONFIG_PATH": str(CURRENT_DIR.parent.parent / "isaac_chansol/Utils/Robot_45/basic_ik/motion_policy_configs/omy/planner_config.yaml")
 }
 
 def main():
