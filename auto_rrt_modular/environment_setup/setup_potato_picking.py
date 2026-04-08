@@ -52,27 +52,27 @@ def setup_environment(**kwargs):
     )
 
     object_dict = {
-        "custom_box_12_12_08_magenta": {
-            "name": "custom_box_12_12_08_magenta",
-            "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_magenta/custom_box_12_12_08_magenta.usd",
+        "custom_box_12_12_08_yellow": {
+            "name": "custom_box_12_12_08_yellow",
+            "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_yellow/custom_box_12_12_08_yellow.usd",
             "size_rank": 0,
             "scale": [1, 1, 1],
             "position": [0.25, -0.015, 0.041],
         },
-        "apple": {
-            "name": "apple",
-            "path": "/nas/ochansol/3d_model/scan_etc/apple/edited/apple.usd",
+        "potato": {
+            "name": "potato",
+            "path": "/nas/ochansol/3d_model/scan_etc/potato/edited/potato.usd",
             "size_rank": 0,
             "scale": [0.1, 0.1, 0.1],
         },
     }
     task_dict = {
         "pick": [
-            "apple",
+            "potato",
         ],
 
         "place": [
-            "custom_box_12_12_08_magenta",
+            "custom_box_12_12_08_yellow"
         ],
     }
 

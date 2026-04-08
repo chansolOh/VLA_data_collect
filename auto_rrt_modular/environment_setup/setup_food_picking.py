@@ -51,7 +51,7 @@ def setup_environment(**kwargs):
         },
     )
 
-    sampled_model_dict = {
+    object_dict = {
         "custom_box_12_12_08_magenta": {
             "name": "custom_box_12_12_08_magenta",
             "path": "/nas/ochansol/3d_model/VLA/custom_box_12_12_08_magenta/custom_box_12_12_08_magenta.usd",
@@ -92,9 +92,22 @@ def setup_environment(**kwargs):
             "scale": [0.1, 0.1, 0.1],
         },
     }
+    task_dict = {
+        "pick": [
+            "custom_box_12_12_08_magenta",
+            "custom_box_12_12_08_blue",
+            "custom_box_12_12_08_yellow"
+        ],
+
+        "place": [
+            "apple",
+            "paprika",
+            "potato"
+        ],
+    }
 
     obj_rep_all_list = []
-    for key, model_attr in sampled_model_dict.items():
+    for key, model_attr in object_dict.items():
         print("model_attr : ", model_attr["name"])
         scan_obj = scan_rep.Scan_Rep(
             usd_path=model_attr["path"],
@@ -103,7 +116,7 @@ def setup_environment(**kwargs):
             scale=model_attr.get("scale", [0.1, 0.1, 0.1]),
             position=model_attr.get("position", [0, 0, 0]),
         )
-        sampled_model_dict[key]["rep"] = scan_obj
+        object_dict[key]["rep"] = scan_obj
         obj_rep_all_list.append(scan_obj)
 
     for obj_rep in obj_rep_all_list:
@@ -131,8 +144,8 @@ def setup_environment(**kwargs):
     platform_rep.set_tf(platform_tf)
     platform_rep.set_scale(platform_scale)
 
-    picking_rep = sampled_model_dict["apple"]["rep"]
-    place_rep = sampled_model_dict["custom_box_12_12_08_magenta"]["rep"]
+    picking_rep = object_dict[task_dict["pick"][0]]["rep"]
+    place_rep = object_dict[task_dict["place"][0]]["rep"]
     box_obb = place_rep.get_init_obb()
     box_x, box_y, box_z = box_obb.max(0) - box_obb.min(0)
     obstacle = VisualCuboid(
@@ -162,11 +175,10 @@ def setup_environment(**kwargs):
         "my_robot_task": my_robot_task,
         "my_robot": my_robot,
         "env_prim": env_prim,
-        "sampled_model_dict": sampled_model_dict,
+        "object_dict": object_dict,
         "obj_rep_all_list": obj_rep_all_list,
+        "task_dict": task_dict, 
         "platform_rep": platform_rep,
-        "picking_rep": picking_rep,
-        "place_rep": place_rep,
         "obstacle": obstacle,
         "rrt": rrt,
         "path_planner_visualizer": path_planner_visualizer,

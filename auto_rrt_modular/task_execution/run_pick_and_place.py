@@ -45,13 +45,22 @@ def rotation_between_vectors_to_quat(source_vec, target_vec):
     return R.from_rotvec(axis * angle).as_quat()
 
 
-def check_eps_num(output_path):
-    action_dir = os.path.join(output_path, "action")
-    action_eps_list = sorted(int(file_name.strip(".json")) for file_name in os.listdir(action_dir) if file_name.endswith(".json"))
-    for idx, num in enumerate(action_eps_list):
-        if idx != num:
-            return idx
-    return len(action_eps_list)
+def action_episode_exists(output_path, episode_num):
+    action_path = Path(output_path) / "action" / f"{episode_num:04d}.json"
+    return action_path.exists()
+
+
+def get_next_episode_num(output_path, start_num=0, end_num=None):
+    if end_num is not None and end_num < start_num:
+        raise ValueError(f"end_num({end_num}) must be greater than or equal to start_num({start_num})")
+
+    episode_num = start_num
+    while end_num is None or episode_num <= end_num:
+        if not action_episode_exists(output_path, episode_num):
+            return episode_num
+        episode_num += 1
+
+    return None
 
 
 def collect_action_snapshot(context, runtime_state):
@@ -110,7 +119,11 @@ def save_action_episode(output_path, runtime_state):
 
     print(f"Saved : {save_path}")
     runtime_state["saved_episode_count"] += 1
-    runtime_state["episode_num"] = check_eps_num(output_path)
+    runtime_state["episode_num"] = get_next_episode_num(
+        output_path,
+        start_num=runtime_state["episode_num"] + 1,
+        end_num=runtime_state["end_num"],
+    )
 
 
 def get_place_scatter_config(fixed_box_position):
@@ -151,7 +164,7 @@ def _reset_episode(context, runtime_state, scatter_config):
     runtime_state["compute_target_flag"] = True
     runtime_state["action_list"] = []
     runtime_state["index"] = 0
-    runtime_state["apple_pos_buffer"] = []
+    runtime_state["pick_pos_buffer"] = []
     runtime_state["actions"] = []
     runtime_state["stage_enter_time"] = 0.0
 
@@ -176,15 +189,26 @@ def has_stage_timed_out(runtime_state, current_time, stage_timeouts):
     return (current_time - runtime_state["stage_enter_time"]) > stage_timeout
 
 
-def run_action_collection(context, fixed_box_position=False, render=None, stage_timeouts=None, max_episodes=None):
+def run_action_collection(
+    context,
+    fixed_box_position=False,
+    render=None,
+    stage_timeouts=None,
+    max_episodes=None,
+    start_num=0,
+    end_num=None,
+):
     output_path = context["output_path"]
     my_world = context["my_world"]
     my_robot_task = context["my_robot_task"]
     my_robot = context["my_robot"]
     platform_rep = context["platform_rep"]
     obj_rep_all_list = context["obj_rep_all_list"]
-    picking_rep = context["picking_rep"]
-    place_rep = context["place_rep"]
+    task_dict = context["task_dict"]
+
+    picking_rep = context["object_dict"][task_dict["pick"][0]]["rep"]
+    place_rep = context["object_dict"][task_dict["place"][0]]["rep"]
+    
     obstacle = context["obstacle"]
     rrt = context["rrt"]
     path_planner_visualizer = context["path_planner_visualizer"]
@@ -194,6 +218,16 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
 
     if stage_timeouts is None:
         stage_timeouts = {}
+
+    initial_episode_num = get_next_episode_num(output_path, start_num=start_num, end_num=end_num)
+    if initial_episode_num is None:
+        print(f"No available episode numbers in range [{start_num}, {end_num}]")
+        return {
+            "episode_num": None,
+            "saved_episode_count": 0,
+            "start_num": start_num,
+            "end_num": end_num,
+        }
 
     scatter_config = get_place_scatter_config(fixed_box_position)
 
@@ -206,7 +240,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
         "rrt_flag": True,
         "rrt_attempt_count": 0,
         "compute_target_flag": True,
-        "apple_pos_buffer": [],
+        "pick_pos_buffer": [],
         "action_list": [],
         "stop_flag": False,
         "target_pos": np.zeros(3),
@@ -214,10 +248,12 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
         "view_pos": None,
         "view_quat": None,
         "actions": [],
-        "episode_num": check_eps_num(output_path),
+        "episode_num": initial_episode_num,
         "saved_episode_count": 0,
         "init_diff_grasp_gripper": None,
         "stage_enter_time": 0.0,
+        "start_num": start_num,
+        "end_num": end_num,
     }
 
     cam_vec = np.array([0, -1, 0])
@@ -260,19 +296,19 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
             continue
 
         if runtime_state["task_stage"] == 0:
-            apple_pos_buffer = runtime_state["apple_pos_buffer"]
-            if len(apple_pos_buffer) < 30:
-                apple_pos_buffer.append(picking_pos)
+            pick_pos_buffer = runtime_state["pick_pos_buffer"]
+            if len(pick_pos_buffer) < 30:
+                pick_pos_buffer.append(picking_pos)
             else:
-                apple_pos_buffer.pop(0)
-                apple_pos_buffer.append(picking_pos)
+                pick_pos_buffer.pop(0)
+                pick_pos_buffer.append(picking_pos)
 
-                if np.std(apple_pos_buffer, axis=0).mean() < 0.0001:
+                if np.std(pick_pos_buffer, axis=0).mean() < 0.0001:
                     advance_task_stage(runtime_state, my_world.current_time)
                     runtime_state["rrt_flag"] = True
                     runtime_state["plan"] = None
                     runtime_state["compute_target_flag"] = True
-                    runtime_state["apple_pos_buffer"] = []
+                    runtime_state["pick_pos_buffer"] = []
                     runtime_state["rrt_attempt_count"] = 0
                     runtime_state["start_current_time"] = my_world.current_time
 
@@ -298,7 +334,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -327,7 +363,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 plan_list = []
                 candi_yaw_list = []
                 rrt.set_max_iterations(80)
-                for candi_yaw in range(0, 180, 5):
+                for candi_yaw in range(20, 160, 5):
                     rrt.set_end_effector_target(target_pos, mat_utils.euler_to_quat(np.array([90, 0, candi_yaw]), degrees=True))
                     rrt.update_world()
                     plan = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
@@ -351,7 +387,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -383,7 +419,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -404,10 +440,10 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 runtime_state["rrt_attempt_count"] += 1
 
         elif runtime_state["task_stage"] == 4:
-            my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[np.pi / 4, np.pi / 4]))
+            my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[-np.pi / 2, np.pi / 2]))
             gripper_joint_idx = my_robot.get_dof_index("rh_r1_joint")
             gripper_joint_effort = my_robot.get_measured_joint_efforts(joint_indices=np.array([gripper_joint_idx]))
-            if gripper_joint_effort > 0.5:
+            if gripper_joint_effort > 1.0:
                 advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
@@ -416,14 +452,14 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
         elif runtime_state["task_stage"] == 5:
             ee_pos, ee_euler = my_robot_task.compute_fk("OMY_grasp_joint")
             diff_grasp_gripper = np.abs(picking_pos - ee_pos)
-            if np.abs(runtime_state["init_diff_grasp_gripper"] - diff_grasp_gripper).sum() > 0.02:
+            if np.abs(runtime_state["init_diff_grasp_gripper"] - diff_grasp_gripper).sum() > 0.08:
                 my_world.stop()
                 print("init_diff_grasp_gripper : ", runtime_state["init_diff_grasp_gripper"], "diff_grasp_gripper : ", diff_grasp_gripper)
                 print("grasp failed, retrying...")
                 continue
 
             if runtime_state["compute_target_flag"]:
-                runtime_state["target_pos"] = (place_pos + picking_pos) / 2 + np.array([0, 0, 0.1])
+                runtime_state["target_pos"] = (place_pos + picking_pos) / 2 + np.array([0, 0, 0.15])
                 runtime_state["compute_target_flag"] = False
 
             if runtime_state["rrt_flag"]:
@@ -431,7 +467,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -446,7 +482,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 runtime_state["rrt_attempt_count"] = 0
 
             if runtime_state["actions"]:
-                my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[np.pi / 4, np.pi / 4]))
+                my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[-np.pi / 2, np.pi / 2]))
                 my_robot.apply_action(runtime_state["actions"].pop(0))
             else:
                 runtime_state["rrt_flag"] = True
@@ -456,7 +492,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
         elif runtime_state["task_stage"] == 6:
             ee_pos, ee_euler = my_robot_task.compute_fk("OMY_grasp_joint")
             diff_grasp_gripper = np.abs(picking_pos - ee_pos)
-            if np.abs(runtime_state["init_diff_grasp_gripper"] - diff_grasp_gripper).sum() > 0.02:
+            if np.abs(runtime_state["init_diff_grasp_gripper"] - diff_grasp_gripper).sum() > 0.08:
                 my_world.stop()
                 print("init_diff_grasp_gripper : ", runtime_state["init_diff_grasp_gripper"], "diff_grasp_gripper : ", diff_grasp_gripper)
                 print("grasp failed, retrying...")
@@ -471,7 +507,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -486,7 +522,7 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
                 runtime_state["rrt_attempt_count"] = 0
 
             if runtime_state["actions"]:
-                my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[np.pi / 4, np.pi / 4]))
+                my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[-np.pi / 2, np.pi / 2]))
                 my_robot.apply_action(runtime_state["actions"].pop(0))
             else:
                 runtime_state["rrt_flag"] = True
@@ -496,20 +532,22 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
             my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[0.0, 0.0]))
 
             gripper_joints = np.abs(my_robot_task.get_joint_positions()[[6, 7]])
-            if np.sum(gripper_joints) < 0.001:
+            print("gripper_joints : ", gripper_joints)
+            if np.sum(gripper_joints) < 0.01:
                 advance_task_stage(runtime_state, my_world.current_time)
                 runtime_state["rrt_flag"] = True
                 runtime_state["plan"] = None
 
         elif runtime_state["task_stage"] == 8:
             ee_pos, ee_euler = my_robot_task.compute_fk("OMY_grasp_joint")
+
             if runtime_state["rrt_flag"]:
                 my_robot.apply_action(ArticulationAction(joint_indices=[6, 7], joint_positions=[0, 0]))
                 rrt.set_end_effector_target(runtime_state["view_pos"], runtime_state["view_quat"])
                 rrt.update_world()
                 runtime_state["plan"] = path_planner_visualizer.compute_plan_as_articulation_actions(max_cspace_dist=0.01)
                 if runtime_state["plan"]:
-                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.02)
+                    runtime_state["actions"] = my_robot_task.rrt_plan_to_traj_actions(runtime_state["plan"], physics_dt=0.025)
                 else:
                     runtime_state["actions"] = []
                 runtime_state["rrt_flag"] = False
@@ -534,6 +572,9 @@ def run_action_collection(context, fixed_box_position=False, render=None, stage_
             if center_diff < 0.03:
                 print("success! center_diff : ", center_diff)
                 save_action_episode(output_path, runtime_state)
+                if runtime_state["episode_num"] is None:
+                    print(f"Completed all available episode numbers in range [{start_num}, {end_num}]")
+                    return runtime_state
                 if max_episodes is not None and runtime_state["saved_episode_count"] >= max_episodes:
                     print(f"Reached max_episodes : {max_episodes}")
                     return runtime_state

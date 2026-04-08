@@ -3,7 +3,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--start_num", type=int, default=0, help="starting episode number")
 parser.add_argument("--end_num", type=int, default=100, help="ending episode number")
 parser.add_argument("--augmentation", action="store_true", help="whether to apply augmentation during data collection")
-parser.add_argument("--detection", action="store_true", help="whether to apply detection during data collection")
+parser.add_argument("--rgb", action="store_true", help="whether to save rgb images")
+parser.add_argument("--depth", action="store_true", help="whether to save depth images")
+parser.add_argument("--inst_seg", action="store_true", help="whether to apply inst_seg during data collection")
+parser.add_argument("--bbox", action="store_true", help="whether to save bbox info during data collection")
 parser.add_argument("--output_path", type=str, default="", help="output path for collected data")
 parser.add_argument("--dataset_path", type=str, default="", help="dataset path for loading action json files")
 parser.add_argument("--light_random", action="store_true", help="whether to randomize light during data collection")
@@ -71,13 +74,13 @@ output_cache_path = os.path.join(output_path, "cache")
 
 writer_dict = {
     "output_dir"                    : output_cache_path,
-    "rgb"                           : False,
-    "bounding_box_2d_loose"         : args.detection,
+    "rgb"                           : args.rgb,
+    "bounding_box_2d_loose"         : args.bbox,
     "bounding_box_2d_tight"         : False,
     "bounding_box_3d"               : False,
     "distance_to_camera"            : False,
-    "distance_to_image_plane"       : True,
-    "instance_segmentation"         : args.detection,
+    "distance_to_image_plane"       : args.depth,
+    "instance_segmentation"         : args.inst_seg,
     "normals"                       : False,
     "semantic_segmentation"         : False,
     "use_common_output_dir"         : False,
@@ -180,7 +183,7 @@ obj_root_path = "/nas/ochansol/3d_model/scan_etc"
 sampled_model_dict={
     "apple":{
         "name":"apple",
-        "path": "/nas/ochansol/3d_model/scan_etc/apple_test/apple.usd",
+        "path": "/nas/ochansol/3d_model/scan_etc/apple/edited/apple.usd",
         "size_rank": 0,
         "scale" : [0.1,0.1,0.1]
     },
@@ -233,20 +236,10 @@ for key in physics_scene_conf.keys():
         
 
 
-# platform_area_prims = csr.find_target_name(env_prim,["Mesh"],"platform_area")
-# platform_area_prims = [i.GetParent() for i in platform_area_prims if i.GetParent().GetName() == "demo"][0]
-
-# platform_path = platform_area_prims.GetPath().__str__()
-# platform_rep = scan_rep.Scan_Rep_Platform(prim_path = platform_path,scale = [1,1,1], class_name = platform_path.split("/")[-1])
 
 my_world.reset()
 
-# platform_tf = csr.find_parents_tf(stage.GetPrimAtPath(platform_path).GetPrim(), include_self=False)
-# platform_scale = csr.find_parents_scale(stage.GetPrimAtPath(platform_path).GetPrim(), include_self=False)
-# platform_rep.set_tf(platform_tf)
-# platform_rep.set_scale(platform_scale)
 
-# csr.scatter_in_platform_area(platform_rep, obj_rep_all_list, fixed_first = False)
 
 
 
@@ -276,28 +269,7 @@ def cleanup_rendering_state():
 for episode_num in tqdm(range(args.start_num, args.end_num)):
     episode_num = f"{episode_num:04d}"
 
-    # episode_list = sorted([i.strip(".json") for i in os.listdir( os.path.join(dataset_path, "action") ) if i.endswith('.json')])
-    # for episode_num in episode_list:
-    #     if os.path.exists( os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")):
-    #         with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-    #             action_data = json.load(f)
 
-    #         rgb_list = [i for i in os.listdir(os.path.join(output_path,f"rgb/{episode_num}/{full_camera.name}")) if i.endswith('.png')]
-    #         if len(rgb_list) >= len(action_data)//4:
-    #             print(f"Already exists : {episode_num} PNG , skip...")
-    #             if episode_num == episode_list[-1]:
-    #                 print("All episodes are loaded.")
-    #                 simulation_app.close()
-    #                 sys.exit()
-    #             continue
-    #         else:
-    #             print("Load episode : ", episode_num)
-    #             break
-    #     else:
-    #         with open( os.path.join(dataset_path, "action", f"{episode_num}.json"), 'r') as f:
-    #             action_data = json.load(f)
-    #         print("Load episode : ", episode_num)
-    #         break
     if not os.path.exists( os.path.join(dataset_path, "action", f"{episode_num}.json") ):
         print(f"Episode {episode_num} does not exist, skip...")
         continue
