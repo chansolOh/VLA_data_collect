@@ -42,15 +42,6 @@ python ./python/VLA_data_collect/isaacsim_01_action_collection_auto_RRT_main.py 
 -------------------------  image gen(auto)  -------------------------------------
 
 uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
---output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_aug" \
---dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
---start_num=0 \
---end_num=100 \
---augmentation \
---detection
-
-
-uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
 --output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_random_light_aug_detect" \
 --dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
 --start_num=0 \
@@ -59,9 +50,10 @@ uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
 --detection \
 --light_random
 
-uv run ../VLA_data_collect/isaacsim_02_scene_gen_auto.py \
---output_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_random_light" \
---dataset_path="/nas/Dataset/VLA/UON/Isaacsim/OMY_apple_picking/auto_fixed_place_ALL" \
---start_num=0 \
---end_num=100 \
---light_random
+
+
+-------------------------- inference --------------------------
+
+uv run python/VLA_data_collect/isaacsim_03_inference.py \
+--fixed_box
+
