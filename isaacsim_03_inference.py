@@ -26,7 +26,7 @@ enable_extension("omni.physx.ui")
 enable_extension("omni.physx")
 
 from auto_rrt_modular.task_execution.run_apple_picking import run_action_collection
-from auto_rrt_modular.environment_setup.setup_food_picking import setup_environment
+from auto_rrt_modular.environment_setup.setup_apple_picking import setup_environment
 
 from isaac_chansol.socket_utils.vla_socket.vla_client import VLAClient
 import isaac_chansol.Utils.isaac_utils_51.rep_utils as csr

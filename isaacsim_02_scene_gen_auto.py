@@ -71,12 +71,12 @@ output_cache_path = os.path.join(output_path, "cache")
 
 writer_dict = {
     "output_dir"                    : output_cache_path,
-    "rgb"                           : True,
+    "rgb"                           : False,
     "bounding_box_2d_loose"         : args.detection,
     "bounding_box_2d_tight"         : False,
     "bounding_box_3d"               : False,
     "distance_to_camera"            : False,
-    "distance_to_image_plane"       : False,
+    "distance_to_image_plane"       : True,
     "instance_segmentation"         : args.detection,
     "normals"                       : False,
     "semantic_segmentation"         : False,
